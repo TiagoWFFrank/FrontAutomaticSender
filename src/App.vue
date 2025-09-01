@@ -390,7 +390,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
 .event-registration {
   padding: var(--space-large);
   max-width: 800px;
@@ -644,5 +644,26 @@ export default {
 
 .event-detail {
   flex: 1;
+}
+
+/* Global variables and base styles */
+:root {
+  --space-large: 24px; --space-medium: 16px; --space-small: 8px; --space-one: 12px; --space-two: 16px; --space-smaller: 6px; --space-micro: 4px;
+  --font-size-xxlarge: 28px; --font-size-xlarge: 22px; --font-size-large: 18px; --font-size-default: 16px; --font-size-small: 14px;
+  --font-weight-bold: 700; --font-weight-medium: 600;
+  --s-2: #ffffff; --s-3: #fafafa; --s-4: #f4f4f5; --s-5: #e4e4e7; --s-6: #d4d4d8; --s-10: #71717a; --s-11: #52525b; --s-12: #18181b;
+  --w-500: #3b82f6; --w-600: #2563eb;
+  --r-50: #fef2f2; --r-100: #fee2e2; --r-200: #fecaca; --r-500: #ef4444; --r-900: #7f1d1d;
+  --g-50: #f0fdf4; --g-100: #dcfce7; --g-200: #bbf7d0; --g-900: #14532d;
+  --border-radius-large: 14px; --border-radius-medium: 10px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: #f6f7f9;
+  margin: 0;
+  padding: 32px;
+  color: #111;
 }
 </style>
