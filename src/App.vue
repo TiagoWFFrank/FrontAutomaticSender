@@ -42,13 +42,19 @@
           </button>
         </div>
 
-        <div class="event-form__group">
-          <label for="messageTemplate" class="event-form__label">Template da Mensagem</label>
+        <div
+          v-for="day in eventForm.daysOfWeek"
+          :key="day"
+          class="event-form__group"
+        >
+          <label :for="`template-${day}`" class="event-form__label">
+            Template da mensagem de {{ dayLabel(day) }}
+          </label>
           <textarea
-            id="messageTemplate"
-            v-model="eventForm.messageTemplate"
+            :id="`template-${day}`"
+            v-model="eventForm.messageTemplates[day]"
             class="event-form__textarea"
-            placeholder="Bem-vindo! Qualquer dúvida, responda este WhatsApp."
+            :placeholder="`Mensagem para ${dayLabel(day)}`"
             rows="4"
             required
           ></textarea>
@@ -121,7 +127,17 @@
                   {{ selectedEvent.enabled ? 'Ativo' : 'Inativo' }}
                 </span>
               </div>
-              <p class="event-card__message">{{ selectedEvent.messageTemplate }}</p>
+              <div class="event-card__message">
+                <template v-if="selectedEvent.messageTemplates">
+                  <div
+                    v-for="(msg, day) in selectedEvent.messageTemplates"
+                    :key="day"
+                  >
+                    <strong>{{ dayLabel(day) }}:</strong> {{ msg }}
+                  </div>
+                </template>
+                <p v-else>{{ selectedEvent.messageTemplate }}</p>
+              </div>
               <div class="event-card__details">
                 <span class="event-card__time">🕒 {{ selectedEvent.time }}</span>
                 <span class="event-card__days">📅 {{ formatDays(selectedEvent.daysOfWeek) }}</span>
@@ -199,7 +215,7 @@ export default {
         time: '09:00',
         startDate: today,
         endDate: today,
-        messageTemplate: '',
+        messageTemplates: {},
         enabled: true,
         attachment: null
       },
@@ -251,8 +267,20 @@ export default {
         this.eventForm.time &&
         this.eventForm.startDate &&
         this.eventForm.endDate &&
-        this.eventForm.messageTemplate
+        this.eventForm.daysOfWeek.every(day =>
+          this.eventForm.messageTemplates[day] && this.eventForm.messageTemplates[day].trim()
+        )
       )
+    }
+  },
+
+  watch: {
+    'eventForm.daysOfWeek'(newDays) {
+      for (const day of Object.keys(this.eventForm.messageTemplates)) {
+        if (!newDays.includes(day)) {
+          delete this.eventForm.messageTemplates[day]
+        }
+      }
     }
   },
 
@@ -390,7 +418,7 @@ export default {
         time: '09:00',
         startDate: today,
         endDate: today,
-        messageTemplate: '',
+        messageTemplates: {},
         enabled: true,
         attachment: null
       }
@@ -420,6 +448,11 @@ export default {
         THU: 'Qui', FRI: 'Sex', SAT: 'Sáb', SUN: 'Dom'
       }
       return days.map(day => dayMap[day]).join(', ')
+    },
+
+    dayLabel(value) {
+      const match = this.daysOptions.find(d => d.value === value)
+      return match ? match.label : value
     }
   }
 }
