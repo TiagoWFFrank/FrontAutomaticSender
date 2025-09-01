@@ -36,40 +36,6 @@
         </div>
 
         <div class="event-form__group">
-          <label for="phoneNumbers" class="event-form__label">Números de Telefone</label>
-          <div class="phone-input-container">
-            <div
-              v-for="(phone, index) in eventForm.phoneNumbers"
-              :key="index"
-              class="phone-input-row"
-            >
-              <input
-                v-model="eventForm.phoneNumbers[index]"
-                type="tel"
-                class="event-form__input event-form__input--phone"
-                placeholder="+5532999999999"
-                required
-              />
-              <button
-                type="button"
-                @click="removePhoneNumber(index)"
-                class="btn btn--danger btn--small"
-                :disabled="eventForm.phoneNumbers.length === 1"
-              >
-                Remover
-              </button>
-            </div>
-            <button
-              type="button"
-              @click="addPhoneNumber"
-              class="btn btn--secondary"
-            >
-              + Adicionar Número
-            </button>
-          </div>
-        </div>
-
-        <div class="event-form__group">
           <label class="event-form__label">Período de evento</label>
           <button type="button" class="btn btn--secondary" @click="showPeriodModal = true">
             Definir período
@@ -97,6 +63,11 @@
             />
             <span class="event-form__checkbox-label">Evento Ativo</span>
           </label>
+        </div>
+
+        <div class="event-form__group">
+          <label for="attachment" class="event-form__label">Anexo</label>
+          <input id="attachment" type="file" class="event-form__input" @change="handleFileChange" />
         </div>
 
         <div class="event-form__actions">
@@ -154,7 +125,6 @@
               <div class="event-card__details">
                 <span class="event-card__time">🕒 {{ selectedEvent.time }}</span>
                 <span class="event-card__days">📅 {{ formatDays(selectedEvent.daysOfWeek) }}</span>
-                <span class="event-card__phones">📱 {{ selectedEvent.phoneNumbers.join(', ') }}</span>
               </div>
             </div>
           </div>
@@ -225,13 +195,13 @@ export default {
       // Form data
       eventForm: {
         eventId: '',
-        phoneNumbers: [''],
         daysOfWeek: [],
         time: '09:00',
         startDate: today,
         endDate: today,
         messageTemplate: '',
-        enabled: true
+        enabled: true,
+        attachment: null
       },
       
       // UI State
@@ -277,7 +247,6 @@ export default {
     isFormValid() {
       return (
         this.eventForm.eventId &&
-        this.eventForm.phoneNumbers.some(phone => phone.trim()) &&
         this.eventForm.daysOfWeek.length > 0 &&
         this.eventForm.time &&
         this.eventForm.startDate &&
@@ -317,35 +286,28 @@ export default {
       this.showPeriodModal = false
     },
 
-    // Gerenciamento de telefones
-    addPhoneNumber() {
-      this.eventForm.phoneNumbers.push('')
-    },
-    
-    removePhoneNumber(index) {
-      if (this.eventForm.phoneNumbers.length > 1) {
-        this.eventForm.phoneNumbers.splice(index, 1)
-      }
-    },
-
     // Validação
     validateForm() {
       this.errors = {}
-      
+
       if (!this.eventForm.eventId.trim()) {
         this.errors.eventId = 'ID do evento é obrigatório'
       }
-      
-      // Validar números de telefone
-      const validPhones = this.eventForm.phoneNumbers.filter(phone => {
-        return phone.trim() && phone.match(/^\+\d{13}$/)
-      })
-      
-      if (validPhones.length === 0) {
-        this.errors.phoneNumbers = 'Pelo menos um número válido é obrigatório (+5532999999999)'
-      }
-      
+
       return Object.keys(this.errors).length === 0
+    },
+
+    handleFileChange(event) {
+      const file = event.target.files[0]
+      if (file) {
+        const reader = new FileReader()
+        reader.onload = () => {
+          this.eventForm.attachment = reader.result
+        }
+        reader.readAsDataURL(file)
+      } else {
+        this.eventForm.attachment = null
+      }
     },
 
     // Submissão do formulário
@@ -358,20 +320,16 @@ export default {
       this.hideAlert()
 
       try {
-        // Limpar números vazios
-        const cleanedData = {
-          ...this.eventForm,
-          phoneNumbers: this.eventForm.phoneNumbers.filter(phone => phone.trim())
-        }
+        const cleanedData = { ...this.eventForm }
 
         const response = await this.submitEventToAWS(cleanedData)
-        
+
         if (response.status === 200) {
           this.showAlert('success', 'Evento cadastrado com sucesso!')
           this.resetForm()
           await this.loadExistingEvents()
         }
-        
+
       } catch (error) {
         console.error('Erro ao cadastrar evento:', error)
         this.showAlert('error', 'Erro ao cadastrar evento. Tente novamente.')
@@ -428,13 +386,13 @@ export default {
       const today = new Date().toISOString().split('T')[0]
       this.eventForm = {
         eventId: '',
-        phoneNumbers: [''],
         daysOfWeek: [],
         time: '09:00',
         startDate: today,
         endDate: today,
         messageTemplate: '',
-        enabled: true
+        enabled: true,
+        attachment: null
       }
       this.errors = {}
     },
@@ -537,17 +495,6 @@ export default {
   color: var(--r-500);
   font-size: var(--font-size-small);
   margin-top: var(--space-small);
-}
-
-/* Phone Numbers */
-.phone-input-row {
-  display: flex;
-  gap: var(--space-small);
-  margin-bottom: var(--space-small);
-}
-
-.event-form__input--phone {
-  flex: 1;
 }
 
 /* Days Selector */
