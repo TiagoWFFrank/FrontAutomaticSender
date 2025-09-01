@@ -4,50 +4,44 @@
       Novo Evento
     </button>
 
-    <table v-if="events.length" class="events-table">
-      <thead>
-        <tr>
-          <th>Título do Evento</th>
-          <th>Período</th>
-          <th>Próxima Execução</th>
-          <th>Ativo</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="event in events" :key="event.eventId" @click="selectEvent(event)">
-          <td>{{ event.eventId }}</td>
-          <td>{{ formatPeriod(event) }}</td>
-          <td>{{ event.nextRun || '-' }}</td>
-          <td><input type="checkbox" v-model="event.enabled" disabled /></td>
-          <td>
-            <button type="button" class="btn btn--secondary btn--small" @click.stop="editEvent(event)">
-              Editar
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div v-if="selectedEvent" class="clients-detail">
-      <h2>Clientes de {{ selectedEvent.eventId }}</h2>
-      <table class="clients-table">
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Número</th>
-            <th>Enviado</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="client in selectedEvent.clients || []" :key="client.phone">
-            <td>{{ client.name }}</td>
-            <td>{{ client.phone }}</td>
-            <td>{{ client.sent ? 'Sim' : 'Não' }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <DxDataGrid
+      v-if="events.length"
+      :data-source="events"
+      key-expr="eventId"
+      :show-borders="true"
+    >
+      <DxColumn data-field="eventId" caption="Título do Evento" />
+      <DxColumn caption="Período">
+        <template #cellTemplate="{ data }">
+          {{ formatPeriod(data.data) }}
+        </template>
+      </DxColumn>
+      <DxColumn data-field="nextRun" caption="Próxima Execução" />
+      <DxColumn data-field="enabled" caption="Ativo" data-type="boolean" />
+      <DxColumn caption="">
+        <template #cellTemplate="{ data }">
+          <button
+            type="button"
+            class="btn btn--secondary btn--small"
+            @click.stop="editEvent(data.data)"
+          >
+            Editar
+          </button>
+        </template>
+      </DxColumn>
+      <DxMasterDetail :enabled="true">
+        <template #template="{ data }">
+          <DxDataGrid
+            :data-source="data.data.clients || []"
+            :show-borders="true"
+          >
+            <DxColumn data-field="name" caption="Nome" />
+            <DxColumn data-field="phone" caption="Número" />
+            <DxColumn data-field="sent" caption="Enviado" data-type="boolean" />
+          </DxDataGrid>
+        </template>
+      </DxMasterDetail>
+    </DxDataGrid>
 
     <div v-if="showForm" class="form-modal">
       <div class="form-modal__content">
@@ -61,10 +55,11 @@
 <script>
 import axios from 'axios'
 import EventForm from './components/EventForm.vue'
+import { DxDataGrid, DxColumn, DxMasterDetail } from 'devextreme-vue/data-grid'
 
 export default {
   name: 'App',
-  components: { EventForm },
+  components: { EventForm, DxDataGrid, DxColumn, DxMasterDetail },
   data() {
     return {
       showForm: false,
@@ -100,12 +95,6 @@ export default {
       if (!this.events.length) {
         this.events = this.getSampleEvents()
       }
-      if (this.events.length) {
-        this.selectedEvent = this.events[0]
-      }
-    },
-    selectEvent(event) {
-      this.selectedEvent = event
     },
     editEvent(event) {
       this.selectedEvent = event
@@ -157,29 +146,6 @@ export default {
   right: var(--space-large);
 }
 
-.events-table,
-.clients-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: var(--space-large);
-}
-
-.events-table th,
-.events-table td,
-.clients-table th,
-.clients-table td {
-  border: 1px solid var(--s-5);
-  padding: var(--space-small);
-  text-align: left;
-}
-
-.events-table tbody tr:hover {
-  background: var(--s-4);
-}
-
-.clients-detail {
-  margin-top: var(--space-large);
-}
 
 .form-modal {
   position: fixed;
