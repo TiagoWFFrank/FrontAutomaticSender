@@ -12,15 +12,24 @@
       <form @submit.prevent="handleSubmit" class="event-form">
         <div class="event-form__group">
           <label for="eventId" class="event-form__label">ID do Evento</label>
-          <input
+          <select
             id="eventId"
             v-model="eventForm.eventId"
-            type="text"
+            @change="handleEventIdChange"
             class="event-form__input"
             :class="{ 'event-form__input--error': errors.eventId }"
-            placeholder="Ex: boas_vindas"
             required
-          />
+          >
+            <option disabled value="">Selecione um evento</option>
+            <option
+              v-for="option in eventIdOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
+            <option value="__new">Inserir um novo evento</option>
+          </select>
           <span v-if="errors.eventId" class="event-form__error">
             {{ errors.eventId }}
           </span>
@@ -174,8 +183,20 @@
           </div>
         </div>
       </div>
+      </div>
+
+    <!-- Modal Novo Evento -->
+  <div v-if="showNewEventModal" class="modal">
+    <div class="modal__content">
+      <h3 class="modal__title">Inserir novo evento</h3>
+      <input v-model="newEventId" type="text" class="event-form__input" placeholder="ID do evento" />
+      <div class="modal__actions">
+        <button type="button" class="btn btn--secondary" @click="closeNewEventModal">Cancelar</button>
+        <button type="button" class="btn btn--primary" @click="confirmNewEvent">Adicionar</button>
+      </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
@@ -206,6 +227,14 @@ export default {
       errors: {},
       existingEvents: [],
       selectedEvent: null,
+
+      eventIdOptions: [
+        { value: 'boas_vindas', label: 'Boas Vindas' },
+        { value: 'aniversario', label: 'Aniversário' },
+        { value: 'promocao_semana', label: 'Promoção da Semana' }
+      ],
+      showNewEventModal: false,
+      newEventId: '',
 
       // Options
       daysOptions: [
@@ -243,6 +272,27 @@ export default {
   },
 
   methods: {
+    // Gerenciamento do ID do evento
+    handleEventIdChange() {
+      if (this.eventForm.eventId === '__new') {
+        this.eventForm.eventId = ''
+        this.newEventId = ''
+        this.showNewEventModal = true
+      }
+    },
+    closeNewEventModal() {
+      this.showNewEventModal = false
+      this.eventForm.eventId = ''
+    },
+    confirmNewEvent() {
+      const trimmed = this.newEventId.trim()
+      if (trimmed) {
+        this.eventIdOptions.push({ value: trimmed, label: trimmed })
+        this.eventForm.eventId = trimmed
+        this.showNewEventModal = false
+      }
+    },
+
     // Gerenciamento de telefones
     addPhoneNumber() {
       this.eventForm.phoneNumbers.push('')
@@ -644,6 +694,43 @@ export default {
 
 .event-detail {
   flex: 1;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal__content {
+  background: var(--s-2);
+  padding: var(--space-large);
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+  max-width: 400px;
+}
+
+.modal__title {
+  margin-top: 0;
+  margin-bottom: var(--space-medium);
+  font-size: var(--font-size-large);
+  color: var(--s-12);
+}
+
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-small);
+  margin-top: var(--space-medium);
 }
 
 /* Global variables and base styles */
