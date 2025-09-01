@@ -144,6 +144,7 @@ export default {
   position: fixed;
   top: var(--space-large);
   right: var(--space-large);
+  z-index: 100;
 }
 
 
