@@ -139,28 +139,38 @@
         </div>
       </div>
 
-      <!-- Lista de Eventos Existentes (Opcional) -->
+      <!-- Master Detail de Eventos -->
       <div v-if="existingEvents.length > 0" class="events-list">
         <h2 class="events-list__title">Eventos Cadastrados</h2>
-        <div
-          v-for="event in existingEvents"
-          :key="event.eventId"
-          class="event-card"
-        >
-          <div class="event-card__header">
-            <h3 class="event-card__title">{{ event.eventId }}</h3>
-            <span
-              class="event-card__status"
-              :class="event.enabled ? 'event-card__status--active' : 'event-card__status--inactive'"
+        <div class="event-master-detail">
+          <ul class="event-master">
+            <li
+              v-for="event in existingEvents"
+              :key="event.eventId"
+              @click="selectEvent(event)"
+              :class="['event-master__item', { 'event-master__item--active': selectedEvent && selectedEvent.eventId === event.eventId }]"
             >
-              {{ event.enabled ? 'Ativo' : 'Inativo' }}
-            </span>
-          </div>
-          <p class="event-card__message">{{ event.messageTemplate }}</p>
-          <div class="event-card__details">
-            <span class="event-card__time">🕒 {{ event.time }}</span>
-            <span class="event-card__days">📅 {{ formatDays(event.daysOfWeek) }}</span>
-            <span class="event-card__phones">📱 {{ event.phoneNumbers.length }} números</span>
+              {{ event.eventId }}
+            </li>
+          </ul>
+          <div class="event-detail" v-if="selectedEvent">
+            <div class="event-card">
+              <div class="event-card__header">
+                <h3 class="event-card__title">{{ selectedEvent.eventId }}</h3>
+                <span
+                  class="event-card__status"
+                  :class="selectedEvent.enabled ? 'event-card__status--active' : 'event-card__status--inactive'"
+                >
+                  {{ selectedEvent.enabled ? 'Ativo' : 'Inativo' }}
+                </span>
+              </div>
+              <p class="event-card__message">{{ selectedEvent.messageTemplate }}</p>
+              <div class="event-card__details">
+                <span class="event-card__time">🕒 {{ selectedEvent.time }}</span>
+                <span class="event-card__days">📅 {{ formatDays(selectedEvent.daysOfWeek) }}</span>
+                <span class="event-card__phones">📱 {{ selectedEvent.phoneNumbers.join(', ') }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -195,7 +205,8 @@ export default {
       },
       errors: {},
       existingEvents: [],
-      
+      selectedEvent: null,
+
       // Options
       daysOptions: [
         { value: 'MON', label: 'Segunda' },
@@ -319,18 +330,23 @@ export default {
             'Authorization': `Bearer ${this.API_CONFIG.authToken}`
           }
         }
-        
+
         const response = await axios.get(
           `${this.API_CONFIG.baseURL}/events`,
           config
         )
-        
+
         if (response.status === 200 && response.data) {
           this.existingEvents = response.data
+          this.selectedEvent = this.existingEvents[0] || null
         }
       } catch (error) {
         console.error('Erro ao carregar eventos:', error)
       }
+    },
+
+    selectEvent(event) {
+      this.selectedEvent = event
     },
 
     // Utilitários
@@ -598,5 +614,35 @@ export default {
   gap: var(--space-medium);
   font-size: var(--font-size-small);
   color: var(--s-10);
+}
+
+/* Master Detail */
+.event-master-detail {
+  display: flex;
+  gap: var(--space-large);
+}
+
+.event-master {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 200px;
+}
+
+.event-master__item {
+  padding: var(--space-small);
+  cursor: pointer;
+  border-radius: var(--border-radius-medium);
+  background: var(--s-3);
+  margin-bottom: var(--space-small);
+}
+
+.event-master__item--active {
+  background: var(--w-500);
+  color: white;
+}
+
+.event-detail {
+  flex: 1;
 }
 </style>
