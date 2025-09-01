@@ -70,33 +70,10 @@
         </div>
 
         <div class="event-form__group">
-          <label class="event-form__label">Dias da Semana</label>
-          <div class="days-selector">
-            <label
-              v-for="day in daysOptions"
-              :key="day.value"
-              class="days-selector__item"
-            >
-              <input
-                v-model="eventForm.daysOfWeek"
-                type="checkbox"
-                :value="day.value"
-                class="days-selector__checkbox"
-              />
-              <span class="days-selector__label">{{ day.label }}</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="event-form__group">
-          <label for="time" class="event-form__label">Horário</label>
-          <input
-            id="time"
-            v-model="eventForm.time"
-            type="time"
-            class="event-form__input"
-            required
-          />
+          <label class="event-form__label">Período de evento</label>
+          <button type="button" class="btn btn--secondary" @click="showPeriodModal = true">
+            Definir período
+          </button>
         </div>
 
         <div class="event-form__group">
@@ -196,6 +173,43 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal Período de Evento -->
+  <div v-if="showPeriodModal" class="modal">
+    <div class="modal__content">
+      <h3 class="modal__title">Período de evento</h3>
+      <div class="event-form__group">
+        <label class="event-form__label">Dias da Semana</label>
+        <div class="days-selector">
+          <label v-for="day in daysOptions" :key="day.value" class="days-selector__item">
+            <input
+              v-model="eventForm.daysOfWeek"
+              type="checkbox"
+              :value="day.value"
+              class="days-selector__checkbox"
+            />
+            <span class="days-selector__label">{{ day.label }}</span>
+          </label>
+        </div>
+      </div>
+      <div class="event-form__group">
+        <label for="time" class="event-form__label">Horário</label>
+        <input id="time" v-model="eventForm.time" type="time" class="event-form__input" />
+      </div>
+      <div class="event-form__group">
+        <label for="startDate" class="event-form__label">Início</label>
+        <input id="startDate" v-model="eventForm.startDate" type="date" class="event-form__input" />
+      </div>
+      <div class="event-form__group">
+        <label for="endDate" class="event-form__label">Fim</label>
+        <input id="endDate" v-model="eventForm.endDate" type="date" class="event-form__input" />
+      </div>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--secondary" @click="closePeriodModal">Cancelar</button>
+        <button type="button" class="btn btn--primary" @click="closePeriodModal">Salvar</button>
+      </div>
+    </div>
+  </div>
 </div>
 </template>
 
@@ -206,6 +220,7 @@ export default {
   name: 'EventRegistration',
   
   data() {
+    const today = new Date().toISOString().split('T')[0]
     return {
       // Form data
       eventForm: {
@@ -213,6 +228,8 @@ export default {
         phoneNumbers: [''],
         daysOfWeek: [],
         time: '09:00',
+        startDate: today,
+        endDate: today,
         messageTemplate: '',
         enabled: true
       },
@@ -235,6 +252,7 @@ export default {
       ],
       showNewEventModal: false,
       newEventId: '',
+      showPeriodModal: false,
 
       // Options
       daysOptions: [
@@ -262,6 +280,8 @@ export default {
         this.eventForm.phoneNumbers.some(phone => phone.trim()) &&
         this.eventForm.daysOfWeek.length > 0 &&
         this.eventForm.time &&
+        this.eventForm.startDate &&
+        this.eventForm.endDate &&
         this.eventForm.messageTemplate
       )
     }
@@ -291,6 +311,10 @@ export default {
         this.eventForm.eventId = trimmed
         this.showNewEventModal = false
       }
+    },
+
+    closePeriodModal() {
+      this.showPeriodModal = false
     },
 
     // Gerenciamento de telefones
@@ -401,11 +425,14 @@ export default {
 
     // Utilitários
     resetForm() {
+      const today = new Date().toISOString().split('T')[0]
       this.eventForm = {
         eventId: '',
         phoneNumbers: [''],
         daysOfWeek: [],
         time: '09:00',
+        startDate: today,
+        endDate: today,
         messageTemplate: '',
         enabled: true
       }
