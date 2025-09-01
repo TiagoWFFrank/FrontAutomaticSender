@@ -43,7 +43,7 @@
         </div>
 
         <div
-          v-for="day in eventForm.daysOfWeek"
+          v-for="day in sortedSelectedDays"
           :key="day"
           class="event-form__group"
         >
@@ -73,7 +73,13 @@
 
         <div class="event-form__group">
           <label for="attachment" class="event-form__label">Anexo</label>
-          <input id="attachment" type="file" class="event-form__input" @change="handleFileChange" />
+          <input
+            id="attachment"
+            type="file"
+            class="event-form__input"
+            @change="handleFileChange"
+            required
+          />
         </div>
 
         <div class="event-form__actions">
@@ -260,6 +266,13 @@ export default {
   },
 
   computed: {
+    sortedSelectedDays() {
+      return [...this.eventForm.daysOfWeek].sort(
+        (a, b) =>
+          this.daysOptions.findIndex(d => d.value === a) -
+          this.daysOptions.findIndex(d => d.value === b)
+      )
+    },
     isFormValid() {
       return (
         this.eventForm.eventId &&
@@ -267,8 +280,11 @@ export default {
         this.eventForm.time &&
         this.eventForm.startDate &&
         this.eventForm.endDate &&
-        this.eventForm.daysOfWeek.every(day =>
-          this.eventForm.messageTemplates[day] && this.eventForm.messageTemplates[day].trim()
+        this.eventForm.attachment &&
+        this.eventForm.daysOfWeek.every(
+          day =>
+            this.eventForm.messageTemplates[day] &&
+            this.eventForm.messageTemplates[day].trim()
         )
       )
     }
