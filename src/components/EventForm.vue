@@ -107,51 +107,6 @@
           <p class="alert__message">{{ submitStatus.message }}</p>
         </div>
       </div>
-
-      <!-- Master Detail de Eventos -->
-      <div v-if="existingEvents.length > 0" class="events-list">
-        <h2 class="events-list__title">Eventos Cadastrados</h2>
-        <div class="event-master-detail">
-          <ul class="event-master">
-            <li
-              v-for="event in existingEvents"
-              :key="event.eventId"
-              @click="selectEvent(event)"
-              :class="['event-master__item', { 'event-master__item--active': selectedEvent && selectedEvent.eventId === event.eventId }]"
-            >
-              {{ event.eventId }}
-            </li>
-          </ul>
-          <div class="event-detail" v-if="selectedEvent">
-            <div class="event-card">
-              <div class="event-card__header">
-                <h3 class="event-card__title">{{ selectedEvent.eventId }}</h3>
-                <span
-                  class="event-card__status"
-                  :class="selectedEvent.enabled ? 'event-card__status--active' : 'event-card__status--inactive'"
-                >
-                  {{ selectedEvent.enabled ? 'Ativo' : 'Inativo' }}
-                </span>
-              </div>
-              <div class="event-card__message">
-                <template v-if="selectedEvent.messageTemplates">
-                  <div
-                    v-for="(msg, day) in selectedEvent.messageTemplates"
-                    :key="day"
-                  >
-                    <strong>{{ dayLabel(day) }}:</strong> {{ msg }}
-                  </div>
-                </template>
-                <p v-else>{{ selectedEvent.messageTemplate }}</p>
-              </div>
-              <div class="event-card__details">
-                <span class="event-card__time">🕒 {{ selectedEvent.time }}</span>
-                <span class="event-card__days">📅 {{ formatDays(selectedEvent.daysOfWeek) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
       </div>
 
     <!-- Modal Novo Evento -->
@@ -234,8 +189,6 @@ export default {
         message: ''
       },
       errors: {},
-      existingEvents: [],
-      selectedEvent: null,
 
       eventIdOptions: [
         { value: 'boas_vindas', label: 'Boas Vindas' },
@@ -298,10 +251,6 @@ export default {
         }
       }
     }
-  },
-
-  mounted() {
-    this.loadExistingEvents()
   },
 
   methods: {
@@ -371,7 +320,7 @@ export default {
         if (response.status === 200) {
           this.showAlert('success', 'Evento cadastrado com sucesso!')
           this.resetForm()
-          await this.loadExistingEvents()
+          this.$emit('event-saved')
         }
 
       } catch (error) {
@@ -396,33 +345,6 @@ export default {
         eventData,
         config
       )
-    },
-
-    // Carregar eventos existentes (opcional)
-    async loadExistingEvents() {
-      try {
-        const config = {
-          headers: {
-            'Authorization': `Bearer ${this.API_CONFIG.authToken}`
-          }
-        }
-
-        const response = await axios.get(
-          `${this.API_CONFIG.baseURL}/events`,
-          config
-        )
-
-        if (response.status === 200 && response.data) {
-          this.existingEvents = response.data
-          this.selectedEvent = this.existingEvents[0] || null
-        }
-      } catch (error) {
-        console.error('Erro ao carregar eventos:', error)
-      }
-    },
-
-    selectEvent(event) {
-      this.selectedEvent = event
     },
 
     // Utilitários
@@ -456,14 +378,6 @@ export default {
 
     hideAlert() {
       this.submitStatus.show = false
-    },
-
-    formatDays(days) {
-      const dayMap = {
-        MON: 'Seg', TUE: 'Ter', WED: 'Qua',
-        THU: 'Qui', FRI: 'Sex', SAT: 'Sáb', SUN: 'Dom'
-      }
-      return days.map(day => dayMap[day]).join(', ')
     },
 
     dayLabel(value) {
@@ -627,96 +541,6 @@ export default {
 .alert__title {
   font-weight: var(--font-weight-bold);
   margin-bottom: var(--space-small);
-}
-
-/* Events List */
-.events-list {
-  margin-top: var(--space-large);
-}
-
-.events-list__title {
-  font-size: var(--font-size-xlarge);
-  margin-bottom: var(--space-medium);
-  color: var(--s-12);
-}
-
-.event-card {
-  background: var(--s-2);
-  padding: var(--space-medium);
-  border-radius: var(--border-radius-large);
-  box-shadow: var(--shadow-sm);
-  margin-bottom: var(--space-medium);
-}
-
-.event-card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-small);
-}
-
-.event-card__title {
-  font-weight: var(--font-weight-bold);
-  color: var(--s-12);
-}
-
-.event-card__status {
-  padding: var(--space-micro) var(--space-small);
-  border-radius: var(--border-radius-large);
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-medium);
-}
-
-.event-card__status--active {
-  background-color: var(--g-100);
-  color: var(--g-900);
-}
-
-.event-card__status--inactive {
-  background-color: var(--r-100);
-  color: var(--r-900);
-}
-
-.event-card__message {
-  color: var(--s-11);
-  margin-bottom: var(--space-small);
-}
-
-.event-card__details {
-  display: flex;
-  gap: var(--space-medium);
-  font-size: var(--font-size-small);
-  color: var(--s-10);
-}
-
-/* Master Detail */
-.event-master-detail {
-  display: flex;
-  gap: var(--space-large);
-}
-
-.event-master {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  width: 200px;
-}
-
-.event-master__item {
-  padding: var(--space-small);
-  cursor: pointer;
-  border-radius: var(--border-radius-medium);
-  background: var(--s-3);
-  margin-bottom: var(--space-small);
-}
-
-.event-master__item--active {
-  background: var(--w-500);
-  color: white;
-}
-
-.event-detail {
-  flex: 1;
 }
 
 /* Modal */
