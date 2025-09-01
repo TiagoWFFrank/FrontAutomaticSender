@@ -97,6 +97,12 @@ export default {
       } catch (err) {
         console.error('Erro ao carregar eventos:', err)
       }
+      if (!this.events.length) {
+        this.events = this.getSampleEvents()
+      }
+      if (this.events.length) {
+        this.selectedEvent = this.events[0]
+      }
     },
     selectEvent(event) {
       this.selectedEvent = event
@@ -114,6 +120,31 @@ export default {
         return `${event.startDate} - ${event.endDate}`
       }
       return '-'
+    },
+    getSampleEvents() {
+      return [
+        {
+          eventId: 'boas_vindas',
+          startDate: '2024-01-01',
+          endDate: '2024-12-31',
+          nextRun: '2024-05-25 09:00',
+          enabled: true,
+          clients: [
+            { name: 'João', phone: '+5531999999999', sent: true },
+            { name: 'Maria', phone: '+5532888888888', sent: false }
+          ]
+        },
+        {
+          eventId: 'aniversarios',
+          startDate: '2024-05-01',
+          endDate: '2024-07-31',
+          nextRun: '2024-05-30 10:00',
+          enabled: false,
+          clients: [
+            { name: 'Carlos', phone: '+5532777777777', sent: false }
+          ]
+        }
+      ]
     }
   }
 }
