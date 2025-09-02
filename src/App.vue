@@ -1,15 +1,18 @@
 <template>
   <div>
-    <button class="btn btn--primary open-form-button" @click="showForm = true">
-      Novo Evento
-    </button>
+    <header class="top-menu">
+      <button class="btn btn--primary" @click="showForm = true">
+        Novo Evento
+      </button>
+    </header>
 
-    <DxDataGrid
-      v-if="events.length"
-      :data-source="events"
-      key-expr="eventId"
-      :show-borders="true"
-    >
+    <main class="main-content">
+      <DxDataGrid
+        v-if="events.length"
+        :data-source="events"
+        key-expr="eventId"
+        :show-borders="true"
+      >
       <DxColumn data-field="eventId" caption="Título do Evento" />
       <DxColumn caption="Período">
         <template #cellTemplate="{ data }">
@@ -29,19 +32,20 @@
           </button>
         </template>
       </DxColumn>
-      <DxMasterDetail :enabled="true">
-        <template #template="{ data }">
-          <DxDataGrid
-            :data-source="data.data.clients || []"
-            :show-borders="true"
-          >
-            <DxColumn data-field="name" caption="Nome" />
-            <DxColumn data-field="phone" caption="Número" />
-            <DxColumn data-field="sent" caption="Enviado" data-type="boolean" />
-          </DxDataGrid>
-        </template>
-      </DxMasterDetail>
-    </DxDataGrid>
+        <DxMasterDetail :enabled="true">
+          <template #template="{ data }">
+            <DxDataGrid
+              :data-source="data.data.clients || []"
+              :show-borders="true"
+            >
+              <DxColumn data-field="name" caption="Nome" />
+              <DxColumn data-field="phone" caption="Número" />
+              <DxColumn data-field="sent" caption="Enviado" data-type="boolean" />
+            </DxDataGrid>
+          </template>
+        </DxMasterDetail>
+      </DxDataGrid>
+    </main>
 
     <div v-if="showForm" class="form-modal">
       <div class="form-modal__content">
@@ -140,11 +144,17 @@ export default {
 </script>
 
 <style>
-.open-form-button {
-  position: fixed;
-  top: var(--space-large);
-  right: var(--space-large);
-  z-index: 100;
+
+.top-menu {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-large);
+  background: var(--s-2);
+  box-shadow: var(--shadow-sm);
+}
+
+.main-content {
+  padding: var(--space-large);
 }
 
 
