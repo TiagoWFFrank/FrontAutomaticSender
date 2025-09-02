@@ -145,14 +145,20 @@ export default {
 
 <style>
 
+:root {
+  --top-menu-height: 72px;
+}
+
 .top-menu {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
+  height: var(--top-menu-height);
   display: flex;
+  align-items: center;
   justify-content: flex-end;
-  padding: var(--space-large);
+  padding: 0 var(--space-large);
   background: var(--s-2);
   box-shadow: var(--shadow-sm);
   z-index: 100;
@@ -160,7 +166,7 @@ export default {
 
 .main-content {
   padding: var(--space-large);
-  margin-top: 88px; /* ensure content starts below the fixed header */
+  margin-top: calc(var(--top-menu-height) + var(--space-large));
 }
 
 

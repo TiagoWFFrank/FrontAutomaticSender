@@ -597,7 +597,7 @@ body {
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   background: #f6f7f9;
   margin: 0;
-  padding: 32px;
+  padding: 0;
   color: #111;
 }
 </style>
