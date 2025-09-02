@@ -600,4 +600,43 @@ body {
   padding: 0;
   color: #111;
 }
+
+@media (max-width: 600px) {
+  .event-registration {
+    padding: var(--space-medium);
+  }
+
+  .event-form {
+    padding: var(--space-medium);
+  }
+
+  .modal__content {
+    width: 95%;
+    max-width: none;
+    padding: var(--space-medium);
+  }
+
+  .modal__actions {
+    flex-direction: column;
+    gap: var(--space-small);
+  }
+
+  .modal__actions .btn {
+    width: 100%;
+  }
+
+  .event-form__actions .btn {
+    width: 100%;
+  }
+}
+
+@media (min-width: 1200px) {
+  .event-registration {
+    max-width: 1200px;
+  }
+
+  .event-form {
+    max-width: 1200px;
+  }
+}
 </style>

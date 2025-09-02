@@ -12,6 +12,9 @@
         :data-source="events"
         key-expr="eventId"
         :show-borders="true"
+        :column-auto-width="true"
+        :column-hiding-enabled="true"
+        width="100%"
       >
       <DxColumn data-field="eventId" caption="Título do Evento" />
       <DxColumn caption="Período">
@@ -37,6 +40,9 @@
             <DxDataGrid
               :data-source="data.data.clients || []"
               :show-borders="true"
+              :column-auto-width="true"
+              :column-hiding-enabled="true"
+              width="100%"
             >
               <DxColumn data-field="name" caption="Nome" />
               <DxColumn data-field="phone" caption="Número" />
@@ -166,7 +172,8 @@ export default {
 
 .main-content {
   padding: var(--space-large);
-  margin-top: calc(var(--top-menu-height) + var(--space-large));
+  margin: calc(var(--top-menu-height) + var(--space-large)) auto 0;
+  max-width: 1200px;
 }
 
 
@@ -199,6 +206,31 @@ export default {
   position: absolute;
   top: var(--space-small);
   right: var(--space-small);
+}
+
+@media (max-width: 600px) {
+  :root {
+    --top-menu-height: 56px;
+  }
+
+  .top-menu {
+    padding: 0 var(--space-medium);
+  }
+
+  .main-content {
+    padding: var(--space-medium);
+    margin: calc(var(--top-menu-height) + var(--space-medium)) auto 0;
+  }
+
+  .form-modal__content {
+    padding: var(--space-medium);
+    width: 95%;
+    max-width: none;
+  }
+
+  .top-menu .btn {
+    width: 100%;
+  }
 }
 </style>
 
