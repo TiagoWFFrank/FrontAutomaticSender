@@ -12,91 +12,49 @@
       <form @submit.prevent="handleSubmit" class="event-form">
         <div class="event-form__group">
           <label for="eventId" class="event-form__label">ID do Evento</label>
-          <input
+          <select
             id="eventId"
             v-model="eventForm.eventId"
-            type="text"
+            @change="handleEventIdChange"
             class="event-form__input"
             :class="{ 'event-form__input--error': errors.eventId }"
-            placeholder="Ex: boas_vindas"
             required
-          />
+          >
+            <option disabled value="">Selecione um evento</option>
+            <option
+              v-for="option in eventIdOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
+            <option value="__new">Inserir um novo evento</option>
+          </select>
           <span v-if="errors.eventId" class="event-form__error">
             {{ errors.eventId }}
           </span>
         </div>
 
         <div class="event-form__group">
-          <label for="phoneNumbers" class="event-form__label">Números de Telefone</label>
-          <div class="phone-input-container">
-            <div
-              v-for="(phone, index) in eventForm.phoneNumbers"
-              :key="index"
-              class="phone-input-row"
-            >
-              <input
-                v-model="eventForm.phoneNumbers[index]"
-                type="tel"
-                class="event-form__input event-form__input--phone"
-                placeholder="+5532999999999"
-                required
-              />
-              <button
-                type="button"
-                @click="removePhoneNumber(index)"
-                class="btn btn--danger btn--small"
-                :disabled="eventForm.phoneNumbers.length === 1"
-              >
-                Remover
-              </button>
-            </div>
-            <button
-              type="button"
-              @click="addPhoneNumber"
-              class="btn btn--secondary"
-            >
-              + Adicionar Número
-            </button>
-          </div>
+          <label class="event-form__label">Período de evento</label>
+          <button type="button" class="btn btn--secondary" @click="showPeriodModal = true">
+            Definir período
+          </button>
         </div>
 
-        <div class="event-form__group">
-          <label class="event-form__label">Dias da Semana</label>
-          <div class="days-selector">
-            <label
-              v-for="day in daysOptions"
-              :key="day.value"
-              class="days-selector__item"
-            >
-              <input
-                v-model="eventForm.daysOfWeek"
-                type="checkbox"
-                :value="day.value"
-                class="days-selector__checkbox"
-              />
-              <span class="days-selector__label">{{ day.label }}</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="event-form__group">
-          <label for="time" class="event-form__label">Horário</label>
-          <input
-            id="time"
-            v-model="eventForm.time"
-            type="time"
-            class="event-form__input"
-            required
-          />
-        </div>
-
-        <div class="event-form__group">
-          <label for="messageTemplate" class="event-form__label">Template da Mensagem</label>
+        <div
+          v-for="day in sortedSelectedDays"
+          :key="day"
+          class="event-form__group"
+        >
+          <label :for="`template-${day}`" class="event-form__label">
+            Template da mensagem de {{ dayLabel(day) }}
+          </label>
           <textarea
-            id="messageTemplate"
-            v-model="eventForm.messageTemplate"
+            :id="`template-${day}`"
+            v-model="eventForm.messageTemplates[day]"
             class="event-form__textarea"
-            placeholder="Bem-vindo! Qualquer dúvida, responda este WhatsApp."
+            :placeholder="`Mensagem para ${dayLabel(day)}`"
             rows="4"
             required
           ></textarea>
@@ -111,6 +69,17 @@
             />
             <span class="event-form__checkbox-label">Evento Ativo</span>
           </label>
+        </div>
+
+        <div class="event-form__group">
+          <label for="attachment" class="event-form__label">Anexo</label>
+          <input
+            id="attachment"
+            type="file"
+            class="event-form__input"
+            @change="handleFileChange"
+            required
+          />
         </div>
 
         <div class="event-form__actions">
@@ -138,52 +107,78 @@
           <p class="alert__message">{{ submitStatus.message }}</p>
         </div>
       </div>
+      </div>
 
-      <!-- Lista de Eventos Existentes (Opcional) -->
-      <div v-if="existingEvents.length > 0" class="events-list">
-        <h2 class="events-list__title">Eventos Cadastrados</h2>
-        <div
-          v-for="event in existingEvents"
-          :key="event.eventId"
-          class="event-card"
-        >
-          <div class="event-card__header">
-            <h3 class="event-card__title">{{ event.eventId }}</h3>
-            <span
-              class="event-card__status"
-              :class="event.enabled ? 'event-card__status--active' : 'event-card__status--inactive'"
-            >
-              {{ event.enabled ? 'Ativo' : 'Inativo' }}
-            </span>
-          </div>
-          <p class="event-card__message">{{ event.messageTemplate }}</p>
-          <div class="event-card__details">
-            <span class="event-card__time">🕒 {{ event.time }}</span>
-            <span class="event-card__days">📅 {{ formatDays(event.daysOfWeek) }}</span>
-            <span class="event-card__phones">📱 {{ event.phoneNumbers.length }} números</span>
-          </div>
-        </div>
+    <!-- Modal Novo Evento -->
+  <div v-if="showNewEventModal" class="modal">
+    <div class="modal__content">
+      <h3 class="modal__title">Inserir novo evento</h3>
+      <input v-model="newEventId" type="text" class="event-form__input" placeholder="ID do evento" />
+      <div class="modal__actions">
+        <button type="button" class="btn btn--secondary" @click="closeNewEventModal">Cancelar</button>
+        <button type="button" class="btn btn--primary" @click="confirmNewEvent">Adicionar</button>
       </div>
     </div>
   </div>
+
+  <!-- Modal Período de Evento -->
+  <div v-if="showPeriodModal" class="modal">
+    <div class="modal__content">
+      <h3 class="modal__title">Período de evento</h3>
+      <div class="event-form__group">
+        <label class="event-form__label">Dias da Semana</label>
+        <div class="days-selector">
+          <label v-for="day in daysOptions" :key="day.value" class="days-selector__item">
+            <input
+              v-model="eventForm.daysOfWeek"
+              type="checkbox"
+              :value="day.value"
+              class="days-selector__checkbox"
+            />
+            <span class="days-selector__label">{{ day.label }}</span>
+          </label>
+        </div>
+      </div>
+      <div class="event-form__group">
+        <label for="time" class="event-form__label">Horário</label>
+        <input id="time" v-model="eventForm.time" type="time" class="event-form__input" />
+      </div>
+      <div class="event-form__group">
+        <label for="startDate" class="event-form__label">Início</label>
+        <input id="startDate" v-model="eventForm.startDate" type="date" class="event-form__input" />
+      </div>
+      <div class="event-form__group">
+        <label for="endDate" class="event-form__label">Fim</label>
+        <input id="endDate" v-model="eventForm.endDate" type="date" class="event-form__input" />
+      </div>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--secondary" @click="closePeriodModal">Cancelar</button>
+        <button type="button" class="btn btn--primary" @click="closePeriodModal">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
 </template>
 
 <script>
 import axios from 'axios'
 
 export default {
-  name: 'EventRegistration',
+  name: 'EventForm',
   
   data() {
+    const today = new Date().toISOString().split('T')[0]
     return {
       // Form data
       eventForm: {
         eventId: '',
-        phoneNumbers: [''],
         daysOfWeek: [],
         time: '09:00',
-        messageTemplate: '',
-        enabled: true
+        startDate: today,
+        endDate: today,
+        messageTemplates: {},
+        enabled: true,
+        attachment: null
       },
       
       // UI State
@@ -194,8 +189,16 @@ export default {
         message: ''
       },
       errors: {},
-      existingEvents: [],
-      
+
+      eventIdOptions: [
+        { value: 'boas_vindas', label: 'Boas Vindas' },
+        { value: 'aniversario', label: 'Aniversário' },
+        { value: 'promocao_semana', label: 'Promoção da Semana' }
+      ],
+      showNewEventModal: false,
+      newEventId: '',
+      showPeriodModal: false,
+
       // Options
       daysOptions: [
         { value: 'MON', label: 'Segunda' },
@@ -216,51 +219,88 @@ export default {
   },
 
   computed: {
+    sortedSelectedDays() {
+      return [...this.eventForm.daysOfWeek].sort(
+        (a, b) =>
+          this.daysOptions.findIndex(d => d.value === a) -
+          this.daysOptions.findIndex(d => d.value === b)
+      )
+    },
     isFormValid() {
       return (
         this.eventForm.eventId &&
-        this.eventForm.phoneNumbers.some(phone => phone.trim()) &&
         this.eventForm.daysOfWeek.length > 0 &&
         this.eventForm.time &&
-        this.eventForm.messageTemplate
+        this.eventForm.startDate &&
+        this.eventForm.endDate &&
+        this.eventForm.attachment &&
+        this.eventForm.daysOfWeek.every(
+          day =>
+            this.eventForm.messageTemplates[day] &&
+            this.eventForm.messageTemplates[day].trim()
+        )
       )
     }
   },
 
-  mounted() {
-    this.loadExistingEvents()
+  watch: {
+    'eventForm.daysOfWeek'(newDays) {
+      for (const day of Object.keys(this.eventForm.messageTemplates)) {
+        if (!newDays.includes(day)) {
+          delete this.eventForm.messageTemplates[day]
+        }
+      }
+    }
   },
 
   methods: {
-    // Gerenciamento de telefones
-    addPhoneNumber() {
-      this.eventForm.phoneNumbers.push('')
-    },
-    
-    removePhoneNumber(index) {
-      if (this.eventForm.phoneNumbers.length > 1) {
-        this.eventForm.phoneNumbers.splice(index, 1)
+    // Gerenciamento do ID do evento
+    handleEventIdChange() {
+      if (this.eventForm.eventId === '__new') {
+        this.eventForm.eventId = ''
+        this.newEventId = ''
+        this.showNewEventModal = true
       }
+    },
+    closeNewEventModal() {
+      this.showNewEventModal = false
+      this.eventForm.eventId = ''
+    },
+    confirmNewEvent() {
+      const trimmed = this.newEventId.trim()
+      if (trimmed) {
+        this.eventIdOptions.push({ value: trimmed, label: trimmed })
+        this.eventForm.eventId = trimmed
+        this.showNewEventModal = false
+      }
+    },
+
+    closePeriodModal() {
+      this.showPeriodModal = false
     },
 
     // Validação
     validateForm() {
       this.errors = {}
-      
+
       if (!this.eventForm.eventId.trim()) {
         this.errors.eventId = 'ID do evento é obrigatório'
       }
-      
-      // Validar números de telefone
-      const validPhones = this.eventForm.phoneNumbers.filter(phone => {
-        return phone.trim() && phone.match(/^\+\d{13}$/)
-      })
-      
-      if (validPhones.length === 0) {
-        this.errors.phoneNumbers = 'Pelo menos um número válido é obrigatório (+5532999999999)'
-      }
-      
+
       return Object.keys(this.errors).length === 0
+    },
+
+    handleFileChange(event) {
+      const file = event.target.files[0]
+      if (file) {
+        const reader = new FileReader()
+        reader.onload = () => {
+          this.eventForm.attachment = reader.result
+        }
+        reader.readAsDataURL(file)
+      } else {
+        this.eventForm.attachment = null
+      }
     },
 
     // Submissão do formulário
@@ -273,20 +313,16 @@ export default {
       this.hideAlert()
 
       try {
-        // Limpar números vazios
-        const cleanedData = {
-          ...this.eventForm,
-          phoneNumbers: this.eventForm.phoneNumbers.filter(phone => phone.trim())
-        }
+        const cleanedData = { ...this.eventForm }
 
         const response = await this.submitEventToAWS(cleanedData)
-        
+
         if (response.status === 200) {
           this.showAlert('success', 'Evento cadastrado com sucesso!')
           this.resetForm()
-          await this.loadExistingEvents()
+          this.$emit('event-saved')
         }
-        
+
       } catch (error) {
         console.error('Erro ao cadastrar evento:', error)
         this.showAlert('error', 'Erro ao cadastrar evento. Tente novamente.')
@@ -311,37 +347,18 @@ export default {
       )
     },
 
-    // Carregar eventos existentes (opcional)
-    async loadExistingEvents() {
-      try {
-        const config = {
-          headers: {
-            'Authorization': `Bearer ${this.API_CONFIG.authToken}`
-          }
-        }
-        
-        const response = await axios.get(
-          `${this.API_CONFIG.baseURL}/events`,
-          config
-        )
-        
-        if (response.status === 200 && response.data) {
-          this.existingEvents = response.data
-        }
-      } catch (error) {
-        console.error('Erro ao carregar eventos:', error)
-      }
-    },
-
     // Utilitários
     resetForm() {
+      const today = new Date().toISOString().split('T')[0]
       this.eventForm = {
         eventId: '',
-        phoneNumbers: [''],
         daysOfWeek: [],
         time: '09:00',
-        messageTemplate: '',
-        enabled: true
+        startDate: today,
+        endDate: today,
+        messageTemplates: {},
+        enabled: true,
+        attachment: null
       }
       this.errors = {}
     },
@@ -363,18 +380,15 @@ export default {
       this.submitStatus.show = false
     },
 
-    formatDays(days) {
-      const dayMap = {
-        MON: 'Seg', TUE: 'Ter', WED: 'Qua',
-        THU: 'Qui', FRI: 'Sex', SAT: 'Sáb', SUN: 'Dom'
-      }
-      return days.map(day => dayMap[day]).join(', ')
+    dayLabel(value) {
+      const match = this.daysOptions.find(d => d.value === value)
+      return match ? match.label : value
     }
   }
 }
 </script>
 
-<style scoped>
+<style>
 .event-registration {
   padding: var(--space-large);
   max-width: 800px;
@@ -444,17 +458,6 @@ export default {
   color: var(--r-500);
   font-size: var(--font-size-small);
   margin-top: var(--space-small);
-}
-
-/* Phone Numbers */
-.phone-input-row {
-  display: flex;
-  gap: var(--space-small);
-  margin-bottom: var(--space-small);
-}
-
-.event-form__input--phone {
-  flex: 1;
 }
 
 /* Days Selector */
@@ -540,63 +543,61 @@ export default {
   margin-bottom: var(--space-small);
 }
 
-/* Events List */
-.events-list {
-  margin-top: var(--space-large);
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.events-list__title {
-  font-size: var(--font-size-xlarge);
-  margin-bottom: var(--space-medium);
-  color: var(--s-12);
-}
-
-.event-card {
+.modal__content {
   background: var(--s-2);
-  padding: var(--space-medium);
+  padding: var(--space-large);
   border-radius: var(--border-radius-large);
   box-shadow: var(--shadow-sm);
+  width: 100%;
+  max-width: 400px;
+}
+
+.modal__title {
+  margin-top: 0;
   margin-bottom: var(--space-medium);
-}
-
-.event-card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-small);
-}
-
-.event-card__title {
-  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-large);
   color: var(--s-12);
 }
 
-.event-card__status {
-  padding: var(--space-micro) var(--space-small);
-  border-radius: var(--border-radius-large);
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-medium);
-}
-
-.event-card__status--active {
-  background-color: var(--g-100);
-  color: var(--g-900);
-}
-
-.event-card__status--inactive {
-  background-color: var(--r-100);
-  color: var(--r-900);
-}
-
-.event-card__message {
-  color: var(--s-11);
-  margin-bottom: var(--space-small);
-}
-
-.event-card__details {
+.modal__actions {
   display: flex;
-  gap: var(--space-medium);
-  font-size: var(--font-size-small);
-  color: var(--s-10);
+  justify-content: flex-end;
+  gap: var(--space-small);
+  margin-top: var(--space-medium);
+}
+
+/* Global variables and base styles */
+:root {
+  --space-large: 24px; --space-medium: 16px; --space-small: 8px; --space-one: 12px; --space-two: 16px; --space-smaller: 6px; --space-micro: 4px;
+  --font-size-xxlarge: 28px; --font-size-xlarge: 22px; --font-size-large: 18px; --font-size-default: 16px; --font-size-small: 14px;
+  --font-weight-bold: 700; --font-weight-medium: 600;
+  --s-2: #ffffff; --s-3: #fafafa; --s-4: #f4f4f5; --s-5: #e4e4e7; --s-6: #d4d4d8; --s-10: #71717a; --s-11: #52525b; --s-12: #18181b;
+  --w-500: #3b82f6; --w-600: #2563eb;
+  --r-50: #fef2f2; --r-100: #fee2e2; --r-200: #fecaca; --r-500: #ef4444; --r-900: #7f1d1d;
+  --g-50: #f0fdf4; --g-100: #dcfce7; --g-200: #bbf7d0; --g-900: #14532d;
+  --border-radius-large: 14px; --border-radius-medium: 10px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: #f6f7f9;
+  margin: 0;
+  padding: 32px;
+  color: #111;
 }
 </style>
